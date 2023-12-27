@@ -1,0 +1,37 @@
+name: Build and Publish ESPHome firmware and website
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.yaml"
+
+permissions:
+  contents: write
+  packages: write
+  issues: write
+  pull-requests: write
+  pages: write
+  id-token: write
+
+jobs:
+  publish-presence:
+    name: Publish Presence
+    uses: esphome/workflows/.github/workflows/publish.yml@main
+    with:
+      files: presence-esp32.yaml
+      name: Presence sensor
+      manifest_filename: presence.json
+      clean: false
+      esphome_version: latest
+  publish-microgreens:
+    name: Publish Microgreens
+    uses: esphome/workflows/.github/workflows/publish.yml@main
+    with:
+      files: microgreens-esp32.yaml,microgreens-esp8266.yaml
+      name: Microgreens
+      manifest_filename: microgreens.json
+      clean: false
+      esphome_version: latest

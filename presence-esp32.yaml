@@ -1,0 +1,340 @@
+substitutions:
+  name: presence
+
+esphome:
+  name: $name
+  friendly_name: $name
+  platformio_options:
+    board_build.flash_mode: dio
+    board_build.f_cpu: 80000000L
+  name_add_mac_suffix: true
+  project:
+    name: esphome.presence-sensor
+    version: "1.0"
+
+api:
+
+ota:
+
+improv_serial:
+
+wifi:
+  ap:
+    ssid: "ESP Presence Sensor"
+
+captive_portal:
+
+dashboard_import:
+  package_import_url: github://majklovec/esphome-nodes/presence.yaml
+
+esp32_improv:
+  authorizer: none
+
+web_server:
+  port: 80
+
+esp32:
+  board: lolin_c3_mini
+  framework:
+    type: esp-idf
+
+logger:
+  hardware_uart: USB_SERIAL_JTAG
+  level: DEBUG
+
+uart:
+  tx_pin: GPIO4
+  rx_pin: GPIO3
+  baud_rate: 256000
+  parity: NONE
+  stop_bits: 1
+
+i2c:
+  sda: 5
+  scl: 6
+  scan: true
+
+ld2410:
+
+binary_sensor:
+  - platform: ld2410
+    has_target:
+      name: Presence
+    has_moving_target:
+      name: Moving Target
+    has_still_target:
+      name: Still Target
+    out_pin_presence_status:
+      name: Out Pin Presence Status
+# We need to use globals to share sensor state without circular references.
+globals:
+  - id: log_level
+    type: int
+    restore_value: yes
+    initial_value: ESPHOME_LOG_LEVEL_WARN
+  - id: temperature
+    type: double
+    restore_value: no
+    initial_value: "NAN"
+  - id: pressure
+    type: double
+    restore_value: no
+    initial_value: "NAN"
+  - id: humidity
+    type: double
+    restore_value: no
+    initial_value: "NAN"
+
+# Example configuration entry
+sensor:
+  - platform: uptime
+    name: "system uptime"
+
+  - platform: wifi_signal
+    name: "wifi strength"
+    update_interval: 60s
+
+  - platform: template
+    name: "Dew Point Temperature"
+    id: dewpoint_temperature
+    filters:
+      - lambda: |-
+          return (243.5*(log(id(humidity)/100)+((17.67 * x)/
+          (243.5 + x)))/(17.67-log(id(humidity)/100)-
+          ((17.67 * x)/(243.5 + x))));
+    icon: "mdi:thermometer-alert"
+    unit_of_measurement: °C
+    update_interval: never
+
+  - platform: template
+    name: "Sea Level Pressure"
+    id: sealevel_pressure
+    filters:
+      - lambda: |-
+          const float STANDARD_ALTITUDE = 34.0; // in meters, see note
+          return x / powf(1 - ((0.0065 * STANDARD_ALTITUDE) /
+            (id(temperature) + (0.0065 * STANDARD_ALTITUDE) + 273.15)), 5.257); // in hPa
+    unit_of_measurement: "hPa"
+    update_interval: never
+
+  - platform: template
+    name: "Absolute Humidity"
+    id: absolute_humidity
+    filters:
+      - lambda: |-
+          const float mw = 18.01534;    // molar mass of water g/mol
+          const float r = 8.31447215;   // Universal gas constant J/mol/K
+          return (6.112 * powf(2.718281828, (17.67 * id(temperature)) /
+            (id(temperature) + 243.5)) * x * mw) /
+            ((273.15 + id(temperature)) * r); // in grams/m^3
+    accuracy_decimals: 2
+    icon: "mdi:water"
+    unit_of_measurement: "g/m³"
+    update_interval: never
+
+  - platform: bme280
+    temperature:
+      name: "Temperature"
+      id: bme280_temperature
+      oversampling: 2x
+      on_value:
+        then:
+          - lambda: |-
+              id(temperature) = x;
+    pressure:
+      name: "Pressure"
+      id: bme280_pressure
+      oversampling: 2x
+      on_value:
+        then:
+          - lambda: |-
+              id(pressure) = x;
+    humidity:
+      name: "Humidity"
+      id: bme280_humidity
+      oversampling: 2x
+      on_value:
+        then:
+          - lambda: |-
+              id(humidity) = x;
+              id(dewpoint_temperature).publish_state(id(temperature));
+              id(sealevel_pressure).publish_state(id(pressure));
+              id(absolute_humidity).publish_state(id(humidity));
+    address: 0x77
+    update_interval: 60s
+
+  - platform: ld2410
+    light:
+      name: Light
+    moving_distance:
+      name: Moving Distance
+    still_distance:
+      name: Still Distance
+    moving_energy:
+      name: Move Energy
+    still_energy:
+      name: Still Energy
+    detection_distance:
+      name: Detection Distance
+    g0:
+      move_energy:
+        name: g0 move energy
+      still_energy:
+        name: g0 still energy
+    g1:
+      move_energy:
+        name: g1 move energy
+      still_energy:
+        name: g1 still energy
+    g2:
+      move_energy:
+        name: g2 move energy
+      still_energy:
+        name: g2 still energy
+    g3:
+      move_energy:
+        name: g3 move energy
+      still_energy:
+        name: g3 still energy
+    g4:
+      move_energy:
+        name: g4 move energy
+      still_energy:
+        name: g4 still energy
+    g5:
+      move_energy:
+        name: g5 move energy
+      still_energy:
+        name: g5 still energy
+    g6:
+      move_energy:
+        name: g6 move energy
+      still_energy:
+        name: g6 still energy
+    g7:
+      move_energy:
+        name: g7 move energy
+      still_energy:
+        name: g7 still energy
+    g8:
+      move_energy:
+        name: g8 move energy
+      still_energy:
+        name: g8 still energy
+  - platform: internal_temperature
+    name: ESP Temperature
+    unit_of_measurement: °C
+    device_class: TEMPERATURE
+    update_interval: 30s
+    entity_category: "diagnostic"
+  - platform: uptime
+    name: Uptime
+    id: sys_uptime
+    update_interval: 10s
+  - platform: wifi_signal
+    name: WiFi RSSI
+    id: wifi_signal_db
+    update_interval: 30s
+    entity_category: "diagnostic"
+
+switch:
+  - platform: ld2410
+    engineering_mode:
+      name: "LD2410 Engineering Mode"
+    bluetooth:
+      name: "LD2410 Bluetooth"
+
+number:
+  - platform: ld2410
+    timeout:
+      name: Timeout
+    light_threshold:
+      name: Light Threshold
+    max_move_distance_gate:
+      name: Max Move Distance Gate
+    max_still_distance_gate:
+      name: Max Still Distance Gate
+    g0:
+      move_threshold:
+        name: g0 move threshold
+      still_threshold:
+        name: g0 still threshold
+    g1:
+      move_threshold:
+        name: g1 move threshold
+      still_threshold:
+        name: g1 still threshold
+    g2:
+      move_threshold:
+        name: g2 move threshold
+      still_threshold:
+        name: g2 still threshold
+    g3:
+      move_threshold:
+        name: g3 move threshold
+      still_threshold:
+        name: g3 still threshold
+    g4:
+      move_threshold:
+        name: g4 move threshold
+      still_threshold:
+        name: g4 still threshold
+    g5:
+      move_threshold:
+        name: g5 move threshold
+      still_threshold:
+        name: g5 still threshold
+    g6:
+      move_threshold:
+        name: g6 move threshold
+      still_threshold:
+        name: g6 still threshold
+    g7:
+      move_threshold:
+        name: g7 move threshold
+      still_threshold:
+        name: g7 still threshold
+    g8:
+      move_threshold:
+        name: g8 move threshold
+      still_threshold:
+        name: g8 still threshold
+
+button:
+  - platform: ld2410
+    factory_reset:
+      name: "LD2410 Factory Reset"
+    restart:
+      name: "LD2410 Reboot"
+    query_params:
+      name: "LD2410 Query Params"
+  - platform: restart
+    icon: mdi:power-cycle
+    name: "ESP Reboot"
+
+text_sensor:
+  - platform: ld2410
+    version:
+      name: "LD2410 Firmware Version"
+    mac_address:
+      name: "LD2410 MAC Address"
+
+select:
+  - platform: ld2410
+    distance_resolution:
+      name: "Distance Resolution"
+    baud_rate:
+      name: "Baud Rate"
+    light_function:
+      name: Light Function
+    out_pin_level:
+      name: Out Pin Level
+
+light:
+  - platform: status_led
+    name: sys_status
+    pin:
+      number: GPIO8
+      inverted: True
+    internal: True
+    restore_mode: ALWAYS_OFF

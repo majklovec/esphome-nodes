@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>ESP Nodes</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@9.0.3/dist/web/install-button.js?module"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.15/dist/tailwind.min.css">
+  <style>
+    .hidden {
+      display: none;
+    }
+
+    /* Style the labels */
+    label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    /* Style the images with borders */
+    label img {
+      border: 2px solid #000;
+      border-radius: 50%;
+      margin-bottom: 8px;
+    }
+
+    /* Hide the radio buttons */
+    input[type="radio"] {
+      display: none;
+    }
+
+    /* Style the selected label */
+    input[type="radio"]:checked+label img {
+      border: 3px solid #007bff;
+      scale: 1.3;
+    }
+
+    input[type="radio"]:checked+label {
+      color: #007bff;
+    }
+  </style>
+
+
+  <template id="item-template">
+    <input type="radio" name="type" value="" id="">
+    <label for="">
+      <img src="" alt="" width="64">
+      <div>Name</div>
+    </label>
+  </template>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col justify-center items-center">
+  <h1 class="text-4xl font-bold mb-8">Install node</h1>
+  <div id="items" class="flex items-center space-x-4">
+    <!-- This is where items will be dynamically inserted from JSON -->
+  </div>
+
+  <div class="mt-4" id="info">...</div>
+  <div class="mt-4">
+    <p>
+      <esp-web-install-button></esp-web-install-button>
+    </p>
+  </div>
+
+  <script>
+    async function loadItemsFromJSON() {
+      const response = await fetch('options.json'); // Change 'items.json' to your JSON file path
+      const data = await response.json();
+
+      const template = document.getElementById('item-template');
+      const container = document.getElementById('items');
+
+      data.forEach(item => {
+        const clone = document.importNode(template.content, true);
+        const input = clone.querySelector('input');
+        const label = clone.querySelector('label');
+        const img = label.querySelector('img');
+        const name = label.querySelector('div');
+
+        label.setAttribute("for", item.value)
+        input.value = item.value;
+        input.id = item.value;
+        input.setAttribute("description", item.info)
+        img.src = "images/" + item.value + ".png";
+        img.alt = item.label;
+        name.textContent = item.label;
+
+        container.appendChild(clone);
+      });
+    }
+
+    const info = document.getElementById('info');
+
+    loadItemsFromJSON().then(() => {
+
+      document.querySelectorAll('input[name="type"]').forEach((radio) => {
+
+        radio.addEventListener("change", (r) => {
+
+          const button = document.querySelector("esp-web-install-button");
+          button.manifest = `./${radio.value}.json`;
+
+          console.log('---', info, radio.getAttribute('description'));
+          info.textContent = radio.getAttribute('description')
+
+        });
+        document
+          .querySelector('input[name="type"]')
+          .dispatchEvent(new Event("click"));
+      });
+    })
+
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,497 @@
+substitutions:
+  name: "microgreens"
+
+esphome:
+  name: $name
+  includes: "HX711I2c.h"
+  friendly_name: $name
+  name_add_mac_suffix: true
+  project:
+    name: esphome.microgreens
+    version: "1.0"
+
+api:
+  reboot_timeout: 0s
+
+  services: # change camera parameters on-the-fly
+    - service: camera_set_param
+      variables:
+        name: string
+        value: int
+      then:
+        - lambda: |-
+            bool state_return = false;
+            if (("contrast" == name) && (value >= -2) && (value <= 2)) { id(espcam).set_contrast(value); state_return = true; }
+            if (("brightness" == name) && (value >= -2) && (value <= 2)) { id(espcam).set_brightness(value); state_return = true; }
+            if (("saturation" == name) && (value >= -2) && (value <= 2)) { id(espcam).set_saturation(value); state_return = true; }
+            if (("special_effect" == name) && (value >= 0U) && (value <= 6U)) { id(espcam).set_special_effect((esphome::esp32_camera::ESP32SpecialEffect)value); state_return = true; }
+            if (("aec_mode" == name) && (value >= 0U) && (value <= 1U)) { id(espcam).set_aec_mode((esphome::esp32_camera::ESP32GainControlMode)value); state_return = true; }
+            if (("aec2" == name) && (value >= 0U) && (value <= 1U)) { id(espcam).set_aec2(value); state_return = true; }
+            if (("ae_level" == name) && (value >= -2) && (value <= 2)) { id(espcam).set_ae_level(value); state_return = true; }
+            if (("aec_value" == name) && (value >= 0U) && (value <= 1200U)) { id(espcam).set_aec_value(value); state_return = true; }
+            if (("agc_mode" == name) && (value >= 0U) && (value <= 1U)) { id(espcam).set_agc_mode((esphome::esp32_camera::ESP32GainControlMode)value); state_return = true; }
+            if (("agc_value" == name) && (value >= 0U) && (value <= 30U)) { id(espcam).set_agc_value(value); state_return = true; }
+            if (("agc_gain_ceiling" == name) && (value >= 0U) && (value <= 6U)) { id(espcam).set_agc_gain_ceiling((esphome::esp32_camera::ESP32AgcGainCeiling)value); state_return = true; }
+            if (("wb_mode" == name) && (value >= 0U) && (value <= 4U)) { id(espcam).set_wb_mode((esphome::esp32_camera::ESP32WhiteBalanceMode)value); state_return = true; }
+            if (("test_pattern" == name) && (value >= 0U) && (value <= 1U)) { id(espcam).set_test_pattern(value); state_return = true; }
+            if (true == state_return) {
+              id(espcam).update_camera_parameters();
+            }
+            else {
+              ESP_LOGW("esp32_camera_set_param", "Error in name or data range");
+            }
+
+ota:
+
+improv_serial:
+
+wifi:
+  ap:
+    ssid: "ESP Microgreens"
+
+captive_portal:
+
+dashboard_import:
+  package_import_url: github://majklovec/esphome-nodes/microgreens.yaml
+
+esp32_improv:
+  authorizer: none
+
+web_server:
+  port: 80
+
+esp32:
+  board: esp32cam
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+  level: DEBUG
+
+# external_components:
+#   - source:
+#       type: local
+#       path: components
+
+i2c:
+  sda: GPIO15
+  scl: GPIO14
+  scan: true
+
+prometheus:
+
+ads1115:
+  - address: 0x48
+
+pca9554:
+  - id: "pca9554a_device"
+    address: 0x41
+
+# mqtt:
+#   broker: 192.168.1.136
+#   port: 1883
+#   discovery: true
+
+text_sensor:
+  - platform: template
+    id: time_txt
+    name: "Actual time"
+
+  - platform: template
+    id: light_range
+    name: "Light range"
+
+number:
+  - platform: template
+    id: start_hr
+    name: start_hr
+    min_value: 0
+    max_value: 23
+    step: 1
+    optimistic: true
+    restore_value: true
+    on_value:
+      then:
+        - script.execute: update_duration
+
+  - platform: template
+    id: start_mn
+    name: start_mn
+    min_value: 0
+    max_value: 59
+    step: 1
+    optimistic: true
+    restore_value: true
+    on_value:
+      then:
+        - script.execute: update_duration
+
+  - platform: template
+    id: stop_hr
+    name: stop_hr
+    min_value: 0
+    max_value: 23
+    step: 1
+    optimistic: true
+    restore_value: true
+    on_value:
+      then:
+        - script.execute: update_duration
+  - platform: template
+    id: stop_mn
+    name: stop_mn
+    min_value: 0
+    max_value: 59
+    step: 1
+    optimistic: true
+    restore_value: true
+    on_value:
+      then:
+        - script.execute: update_duration
+
+  - platform: template
+    name: "Watering interval (mins)"
+    id: interval_watering
+    min_value: 0
+    max_value: 480
+    step: 5
+    optimistic: true
+    restore_value: true
+  - platform: template
+    name: "Watering duration (secs)"
+    id: duration_watering
+    min_value: 0
+    max_value: 120
+    step: 1
+    optimistic: true
+    restore_value: true
+
+  - platform: template
+    name: "Fan interval (mins)"
+    id: interval_fan
+    min_value: 0
+    max_value: 120
+    step: 5
+    optimistic: true
+    restore_value: true
+  - platform: template
+    name: "Fan duration (secs)"
+    id: duration_fan
+    min_value: 0
+    max_value: 120
+    step: 1
+    optimistic: true
+    restore_value: true
+
+binary_sensor:
+  - platform: template
+    id: lights_automation
+    lambda: |-
+      int start = id(start_hr).state * 60 + id(start_mn).state;
+      int stop = id(stop_hr).state * 60 + id(stop_mn).state;
+      int now = id(sntp_time).now().hour * 60 + id(sntp_time).now().minute;
+
+      if (start + stop == 0) {
+        return false;
+      } 
+
+      if (start < stop) {
+        if (now >= start && now < stop) {
+          return true;
+        }
+      } else {
+        if (now >= stop && now < start) {
+          return true;
+        }
+      }
+      return false;
+    on_press:
+      then:
+        - light.turn_on: lights
+    on_release:
+      then:
+        - light.turn_off: lights
+
+  - platform: template
+    id: water_automation
+    lambda: |-
+      int interval = id(interval_watering).state;
+      int now = id(sntp_time).now().hour * 60 + id(sntp_time).now().minute;
+      int seconds = id(sntp_time).now().second;
+
+      if (interval != 0 && now % interval == 0 && seconds == 0) {
+        return true;
+      } 
+      return false;
+    on_press:
+      then:
+        if:
+          condition:
+            not:
+              script.is_running: watering
+          then:
+            - script.execute: watering
+
+  - platform: template
+    id: fan_automation
+    lambda: |-
+      int interval = id(interval_fan).state;
+      int now = id(sntp_time).now().hour * 60 + id(sntp_time).now().minute;
+      int seconds = id(sntp_time).now().second;
+
+      if (interval != 0 && now % interval == 0 && seconds == 0) {
+        return true;
+      } 
+      return false;
+    on_press:
+      then:
+        if:
+          condition:
+            not:
+              script.is_running: fanning
+          then:
+            - script.execute: fanning
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+    filters:
+      - median:
+          window_size: 7
+          send_every: 4
+          send_first_at: 3
+
+  - platform: bme680
+    temperature:
+      name: "Temperature"
+      oversampling: 16x
+    pressure:
+      name: "Pressure"
+    humidity:
+      name: "Humidity"
+    gas_resistance:
+      name: "Gas Resistance"
+    address: 0x77
+    update_interval: 30s
+
+  - platform: tsl2561
+    name: "Ambient Light"
+    address: 0x49
+    update_interval: 30s
+
+  - platform: vl53l0x
+    name: "Water level"
+    address: 0x29
+    update_interval: 1min
+    accuracy_decimals: 2
+    unit_of_measurement: "%"
+    filters:
+      - median:
+          window_size: 7
+          send_every: 4
+          send_first_at: 3
+      - sliding_window_moving_average:
+          window_size: 15
+      - calibrate_linear:
+          - 0.028 -> 100
+          - 1 -> 0
+
+  - platform: ads1115
+    multiplexer: "A2_GND"
+    update_interval: 1min
+    gain: 4.096
+    name: "EC"
+    id: ec
+    unit_of_measurement: "S"
+    filters:
+      - lambda: if(id(water).state) { return {}; } else { return x; }
+      - quantile:
+          window_size: 7
+          send_every: 4
+          send_first_at: 3
+          quantile: .9
+      - lambda: return (133.42*x*x*x - 255.86*x*x + 857.39*x);
+
+  - platform: ads1115
+    multiplexer: "A3_GND"
+    update_interval: 1min
+    gain: 4.096
+    name: "pH"
+    unit_of_measurement: ""
+    accuracy_decimals: 1
+    id: ph
+    filters:
+      - lambda: if(id(water).state) { return {}; } else { return x; }
+      - quantile:
+          window_size: 7
+          send_every: 4
+          send_first_at: 3
+          quantile: .9
+      - calibrate_linear:
+          - 0 -> 0
+          - 5 -> 14
+
+  # - platform: ntc
+  #   sensor: resistance_sensor
+  #   calibration:
+  #     b_constant: 3550
+  #     reference_temperature: 25°C
+  #     reference_resistance: 10kOhm
+  #   name: NTC Temperature
+  # filters:
+  #    -  offset:  +2.5
+
+  # - platform: resistance
+  #   id: resistance_sensor
+  #   sensor: ads1
+  #   configuration: DOWNSTREAM
+  #   resistor: 10.0kOhm
+
+  # - platform: ads1115
+  #   multiplexer: 'A0_GND'
+  #   gain: 2.048
+  #   id: ads1
+
+  - platform: custom
+    lambda: |-
+      auto my_sensor = new HX711I2c();
+      App.register_component(my_sensor);
+      return {my_sensor->cell[0], my_sensor->cell[1], my_sensor->cell[2]};
+    sensors:
+      - name: "cell1"
+        id: "cell1"
+        accuracy_decimals: 0
+      - name: "cell2"
+        id: "cell2"
+        accuracy_decimals: 0
+      - name: "cell3"
+        id: "cell3"
+        accuracy_decimals: 0
+
+switch:
+  - platform: restart
+    name: "Restart"
+
+  - platform: gpio
+    name: "02. Water"
+    id: water
+    pin:
+      pca9554: pca9554a_device
+      number: 0
+      mode:
+        output: true
+      inverted: false
+
+  - platform: gpio
+    name: "03. Fans"
+    id: fan
+    pin:
+      pca9554: pca9554a_device
+      number: 1
+      mode:
+        output: true
+      inverted: false
+
+output:
+  - platform: ledc
+    channel: 4
+    pin: GPIO13
+    id: gpio_13
+    frequency: 2441Hz
+
+light:
+  - platform: monochromatic
+    output: gpio_13
+    name: "01. Lights"
+    id: lights
+    default_transition_length: 3s
+
+button:
+  - platform: template
+    name: "Watering"
+    icon: "mdi:watering-can"
+    id: watering_button
+    on_press:
+      then:
+        - script.execute: watering
+script:
+  - id: watering
+    then:
+      - switch.turn_on: water
+      - delay: !lambda return id(duration_watering).state * 1000;
+      - switch.turn_off: water
+
+  - id: fanning
+    then:
+      - switch.turn_on: fan
+      - delay: !lambda return id(duration_fan).state * 1000;
+      - switch.turn_off: fan
+
+  - id: update_duration
+    then:
+      - lambda: |-
+          char str[35];
+          int sh = id(start_hr).state;
+          int sm = id(start_mn).state;
+          int eh = id(stop_hr).state;
+          int em = id(stop_mn).state;
+
+          int start = sh * 60 + sm;
+          int stop = eh * 60 + em;
+
+
+          if (start < stop) {                  
+            float dh = (stop - start) / 60.0;
+            sprintf(str, "%u:%u -> %u:%u (%.1f h)", sh, sm, eh, em, dh);
+          } else {
+            float dh = (start - stop) / 60.0;
+            sprintf(str, "%u:%u -> %u:%u (%.1f h)", eh, em, sh, sm, dh);
+          }
+
+          id(light_range).publish_state(str);
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Prague
+
+esp32_camera:
+  id: espcam
+  name: $devicename
+  external_clock:
+    pin: GPIO0
+    frequency: 8MHz
+  i2c_pins:
+    sda: GPIO26
+    scl: GPIO27
+  data_pins: [GPIO5, GPIO18, GPIO19, GPIO21, GPIO36, GPIO39, GPIO34, GPIO35]
+  vsync_pin: GPIO25
+  href_pin: GPIO23
+  pixel_clock_pin: GPIO22
+  power_down_pin: GPIO32
+  resolution: 1600x1200
+  idle_framerate: 0.1fps
+  horizontal_mirror: false
+  vertical_flip: false
+  jpeg_quality: 10
+#  contrast: 2
+#  saturation: 2
+#  wb_mode: home
+#  agc_mode: manual
+#  agc_gain_ceiling: 64x
+#  agc_value: 0
+#  aec_mode: manual
+#  aec_value: 300
+
+esp32_camera_web_server:
+  - port: 8080
+    mode: stream
+  - port: 8081
+    mode: snapshot
+
+status_led:
+  pin:
+    number: GPIO33
+    inverted: true
