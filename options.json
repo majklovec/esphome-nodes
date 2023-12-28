@@ -1,0 +1,32 @@
+[
+    {
+        "value": "presence",
+        "label": "Presence",
+        "info": "Presence sensor"
+    },
+    {
+        "value": "microgreens",
+        "label": "Microgreens",
+        "info": "Microgreens sensor"
+    },
+    {
+        "value": "bedweight",
+        "label": "Bedweight",
+        "info": "Bedweight sensor"
+    },
+    {
+        "value": "beehive",
+        "label": "Beehive",
+        "info": "Beehive sensor"
+    },
+    {
+        "value": "grip",
+        "label": "Grip",
+        "info": "Grip sensor"
+    },
+    {
+        "value": "wordclock",
+        "label": "Wordclock",
+        "info": "Wordclock sensor"
+    }
+]

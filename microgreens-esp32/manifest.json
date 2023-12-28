@@ -1,0 +1,9 @@
+{
+  "chipFamily": "ESP32",
+  "parts": [
+    {
+      "path": "microgreens-esp32/microgreens-esp32.bin",
+      "offset": 0
+    }
+  ]
+}
