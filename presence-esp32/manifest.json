@@ -1,0 +1,9 @@
+{
+  "chipFamily": "ESP32-C3",
+  "parts": [
+    {
+      "path": "presence-esp32/presence-esp32.bin",
+      "offset": 0
+    }
+  ]
+}
