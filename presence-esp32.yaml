@@ -25,7 +25,7 @@ wifi:
 captive_portal:
 
 dashboard_import:
-  package_import_url: github://majklovec/esphome-nodes/presence.yaml
+  package_import_url: github://majklovec/esphome-nodes/presence-esp32.yaml
 
 esp32_improv:
   authorizer: none
@@ -49,10 +49,10 @@ uart:
   parity: NONE
   stop_bits: 1
 
-i2c:
-  sda: 5
-  scl: 6
-  scan: true
+# i2c:
+#   sda: 5
+#   scl: 6
+#   scan: true
 
 ld2410:
 
@@ -66,102 +66,103 @@ binary_sensor:
       name: Still Target
     out_pin_presence_status:
       name: Out Pin Presence Status
-# We need to use globals to share sensor state without circular references.
+
 globals:
   - id: log_level
     type: int
     restore_value: yes
     initial_value: ESPHOME_LOG_LEVEL_WARN
-  - id: temperature
-    type: double
-    restore_value: no
-    initial_value: "NAN"
-  - id: pressure
-    type: double
-    restore_value: no
-    initial_value: "NAN"
-  - id: humidity
-    type: double
-    restore_value: no
-    initial_value: "NAN"
+  # - id: temperature
+  #   type: double
+  #   restore_value: no
+  #   initial_value: "NAN"
+  # - id: pressure
+  #   type: double
+  #   restore_value: no
+  #   initial_value: "NAN"
+  # - id: humidity
+  #   type: double
+  #   restore_value: no
+  #   initial_value: "NAN"
 
 # Example configuration entry
 sensor:
   - platform: uptime
     name: "system uptime"
-
+  - platform: internal_temperature
+    name: "Internal Temperature"
   - platform: wifi_signal
     name: "wifi strength"
     update_interval: 60s
 
-  - platform: template
-    name: "Dew Point Temperature"
-    id: dewpoint_temperature
-    filters:
-      - lambda: |-
-          return (243.5*(log(id(humidity)/100)+((17.67 * x)/
-          (243.5 + x)))/(17.67-log(id(humidity)/100)-
-          ((17.67 * x)/(243.5 + x))));
-    icon: "mdi:thermometer-alert"
-    unit_of_measurement: °C
-    update_interval: never
+  # - platform: template
+  #   name: "Dew Point Temperature"
+  #   id: dewpoint_temperature
+  #   filters:
+  #     - lambda: |-
+  #         return (243.5*(log(id(humidity)/100)+((17.67 * x)/
+  #         (243.5 + x)))/(17.67-log(id(humidity)/100)-
+  #         ((17.67 * x)/(243.5 + x))));
+  #   icon: "mdi:thermometer-alert"
+  #   unit_of_measurement: °C
+  #   update_interval: never
 
-  - platform: template
-    name: "Sea Level Pressure"
-    id: sealevel_pressure
-    filters:
-      - lambda: |-
-          const float STANDARD_ALTITUDE = 34.0; // in meters, see note
-          return x / powf(1 - ((0.0065 * STANDARD_ALTITUDE) /
-            (id(temperature) + (0.0065 * STANDARD_ALTITUDE) + 273.15)), 5.257); // in hPa
-    unit_of_measurement: "hPa"
-    update_interval: never
+  # - platform: template
+  #   name: "Sea Level Pressure"
+  #   id: sealevel_pressure
+  #   filters:
+  #     - lambda: |-
+  #         const float STANDARD_ALTITUDE = 34.0; // in meters, see note
+  #         return x / powf(1 - ((0.0065 * STANDARD_ALTITUDE) /
+  #           (id(temperature) + (0.0065 * STANDARD_ALTITUDE) + 273.15)), 5.257); // in hPa
+  #   unit_of_measurement: "hPa"
+  #   update_interval: never
 
-  - platform: template
-    name: "Absolute Humidity"
-    id: absolute_humidity
-    filters:
-      - lambda: |-
-          const float mw = 18.01534;    // molar mass of water g/mol
-          const float r = 8.31447215;   // Universal gas constant J/mol/K
-          return (6.112 * powf(2.718281828, (17.67 * id(temperature)) /
-            (id(temperature) + 243.5)) * x * mw) /
-            ((273.15 + id(temperature)) * r); // in grams/m^3
-    accuracy_decimals: 2
-    icon: "mdi:water"
-    unit_of_measurement: "g/m³"
-    update_interval: never
+  # - platform: template
+  #   name: "Absolute Humidity"
+  #   id: absolute_humidity
+  #   filters:
+  #     - lambda: |-
+  #         const float mw = 18.01534;    // molar mass of water g/mol
+  #         const float r = 8.31447215;   // Universal gas constant J/mol/K
+  #         return (6.112 * powf(2.718281828, (17.67 * id(temperature)) /
+  #           (id(temperature) + 243.5)) * x * mw) /
+  #           ((273.15 + id(temperature)) * r); // in grams/m^3
+  #   accuracy_decimals: 2
+  #   icon: "mdi:water"
+  #   unit_of_measurement: "g/m³"
+  #   update_interval: never
 
-  - platform: bme280
-    temperature:
-      name: "Temperature"
-      id: bme280_temperature
-      oversampling: 2x
-      on_value:
-        then:
-          - lambda: |-
-              id(temperature) = x;
-    pressure:
-      name: "Pressure"
-      id: bme280_pressure
-      oversampling: 2x
-      on_value:
-        then:
-          - lambda: |-
-              id(pressure) = x;
-    humidity:
-      name: "Humidity"
-      id: bme280_humidity
-      oversampling: 2x
-      on_value:
-        then:
-          - lambda: |-
-              id(humidity) = x;
-              id(dewpoint_temperature).publish_state(id(temperature));
-              id(sealevel_pressure).publish_state(id(pressure));
-              id(absolute_humidity).publish_state(id(humidity));
-    address: 0x77
-    update_interval: 60s
+  # - platform: bme280
+  #   temperature:
+  #     name: "Temperature"
+  #     id: bme280_temperature
+  #     oversampling: 2x
+  #     on_value:
+  #       then:
+  #         - lambda: |-
+  #             id(temperature) = x;
+  #   pressure:
+  #     name: "Pressure"
+  #     id: bme280_pressure
+  #     oversampling: 2x
+  #     on_value:
+  #       then:
+  #         - lambda: |-
+  #             id(pressure) = x;
+  #   humidity:
+  #     name: "Humidity"
+  #     id: bme280_humidity
+  #     oversampling: 2x
+  #     on_value:
+  #       then:
+  #         - lambda: |-
+  #             id(humidity) = x;
+  #             id(dewpoint_temperature).publish_state(id(temperature));
+  #             id(sealevel_pressure).publish_state(id(pressure));
+  #             id(absolute_humidity).publish_state(id(humidity));
+  #   address: 0x77
+  #   update_interval: 60s
 
   - platform: ld2410
     light:
