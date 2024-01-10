@@ -31,7 +31,7 @@ jobs:
     name: Publish Bedweight
     uses: esphome/workflows/.github/workflows/publish.yml@main
     with:
-      files: bedweight-esp32c3.yaml
+      files: bedweight-esp32.yaml
       name: Bed sensor
       manifest_filename: presence.json
       clean: false
