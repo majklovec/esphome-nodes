@@ -1,0 +1,176 @@
+substitutions:
+  name: bedweight
+
+esphome:
+  name: $name
+  friendly_name: $name
+  name_add_mac_suffix: false
+  project:
+    name: esphome.bedweight-sensor
+    version: "1.0"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+api:
+  reboot_timeout: 0s
+ota:
+
+improv_serial:
+
+wifi:
+  ap:
+    ssid: "ESP Bed Sensor"
+
+captive_portal:
+
+dashboard_import:
+  package_import_url: github://majklovec/esphome-nodes/bedweight-esp32.yaml@main
+  import_full_config: false
+
+esp32_improv:
+  authorizer: none
+
+web_server:
+  port: 80
+
+globals:
+  - id: initial_zero
+    type: float
+    restore_value: yes
+    # NOTE: make sure to align this value to the one used in "calibrate_linear" below!
+    initial_value: "1465257"
+
+  - id: tare_difference
+    type: float
+    restore_value: yes
+    initial_value: "0"
+
+  # Timer to track how long the maximum value has been maintained
+  - id: max_value_timer
+    type: float
+    initial_value: "0"
+
+# Enable logging
+logger:
+  level: INFO
+
+button:
+  ## Button used to initiate a manual tare
+  - platform: template
+    id: bedweight_manual_tare_action_switch
+    name: "${name} Manual Tare Action"
+    on_press:
+      - lambda: "id(tare_difference) = id(initial_zero) - id(hx711_value).state;"
+
+status_led:
+  pin:
+    number: GPIO2
+
+time:
+  - platform: sntp
+    timezone: Europe/Prague
+    id: sntp_time
+
+## Sensor Configuration ##
+sensor:
+  # template sensors from global variables
+  - platform: template
+    id: bedweight_initial_zero
+    name: "${name} Initial Zero"
+    lambda: |-
+      return id(initial_zero);
+    update_interval: 1s
+    internal: true
+
+  - platform: template
+    id: show_tare_difference
+    name: "${name} Tare Difference"
+    lambda: |-
+      return id(tare_difference);
+    update_interval: 1s
+    internal: true
+
+  - platform: template
+    id: weight
+    name: "${name} Weight"
+    unit_of_measurement: "kg"
+    icon: mdi:scale-balance
+    device_class: "weight"
+    state_class: "measurement"
+    filters:
+      - lambda: "return x + id(tare_difference);"
+      - calibrate_linear:
+          # retrieve these values by evaluating the raw values with loads of known mass.
+          # note that a bigger difference between measurements usually results in higher resolution,
+          # so measure 0 Kg and the highest known mass you have (like f.ex. your own weight, measured by a normal scale with good accuracy)
+          - 1465257 -> 0
+          - 1487667 -> 1.636
+          - 2601000 -> 91.7
+      # map values below 0.1 to 0 (to decrease value changes due to random fluctuation)
+      - lambda: |-
+          if (x <= 0.1) {
+            return 0.0;
+          }
+          return x;
+      - heartbeat: 5s
+
+  - platform: template
+    name: "${name} RAW"
+    id: hx711_value_show
+    filters:
+      - heartbeat: 5s
+
+  # RAW Scale input
+  - platform: hx711
+    id: hx711_value
+    internal: True
+    dout_pin: GPIO16
+    clk_pin: GPIO04
+    gain: 128
+    update_interval: 0.2s
+    filters:
+      - quantile:
+          window_size: 10
+          send_every: 1
+          send_first_at: 1
+          quantile: .9
+    on_value:
+      then:
+        - sensor.template.publish:
+            id: hx711_value_show
+            state: !lambda "return id(hx711_value).state;"
+        - sensor.template.publish:
+            id: weight
+            state: !lambda "return id(hx711_value).state;"
+
+    # the sensor will automatically update through the 'sensor.template.publish' call
+
+    # - if:
+    #     condition:
+    #       - lambda: 'return id(max_bedweight_value) > 10;'
+    #     then:
+    #       - lambda: |-
+    #           auto call = id(led).turn_on();
+    #           call.set_effect("None");
+    #           call.perform();
+
+    #       - http_request.post:
+    #           url: "http://192.168.1.136:1337/api/fits"
+    #           method: POST
+    #           headers:
+    #             Content-Type: 'application/json'
+    #             Authorization: 'Bearer 71cdbbfc7d9f51a2cdff58f0587b6dd2096320d4c58ad3bb4cc09f5fbaf3519e02a6a85b3035c6959339185eaa4b1274523454b467300620ae44433b74cba86ee3ed4af2d746a9df61933cf847b7d5efe74fc6b3ca96120db7c7512c04c742920ced5533b169e0010d2428d41e9542a35fd6ab82fdb72797bc269dc058d26e58'
+    #           body: !lambda |-
+    #             auto time = id(sntp_time).now();
+    #             time_t currTime = id(sntp_time).now().timestamp;
+    #             char buf[128];
+    #             sprintf(buf, "{ \"data\": { \"timestamp\": %lu000, \"user\": 11, \"data_source\": 70, \"value\": %0.3f }}", currTime, id(max_bedweight_value));
+    #             return buf;
+    #       - lambda: 'id(max_bedweight_value) = 0;'
+    #       - delay: 3s
+    #       - lambda: |-
+    #           auto call = id(led).turn_off();
+    #           call.perform();
