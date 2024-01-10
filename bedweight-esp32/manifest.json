@@ -1,0 +1,9 @@
+{
+  "chipFamily": "ESP32",
+  "parts": [
+    {
+      "path": "bedweight-esp32/bedweight-esp32.bin",
+      "offset": 0
+    }
+  ]
+}
