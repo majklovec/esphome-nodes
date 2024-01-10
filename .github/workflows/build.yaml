@@ -21,7 +21,7 @@ jobs:
     name: Publish Presence
     uses: esphome/workflows/.github/workflows/publish.yml@main
     with:
-      files: presence-esp32.yaml
+      files: presence-esp32c3.yaml
       name: Presence sensor
       manifest_filename: presence.json
       clean: false

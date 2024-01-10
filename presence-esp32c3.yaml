@@ -7,10 +7,19 @@ esphome:
   platformio_options:
     board_build.flash_mode: dio
     board_build.f_cpu: 80000000L
+    board_build.f_flash: 40000000L
+
+    board_build.flash_size: 4MB
   name_add_mac_suffix: true
   project:
     name: esphome.presence-sensor
     version: "1.0"
+
+esp32:
+  board: esp32-c3-devkitm-1
+  variant: esp32c3
+  framework:
+    type: esp-idf
 
 api:
 
@@ -32,11 +41,6 @@ esp32_improv:
 
 web_server:
   port: 80
-
-esp32:
-  board: lolin_c3_mini
-  framework:
-    type: esp-idf
 
 logger:
   hardware_uart: USB_SERIAL_JTAG
