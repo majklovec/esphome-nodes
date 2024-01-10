@@ -96,9 +96,7 @@
     loadItemsFromJSON().then(() => {
 
       document.querySelectorAll('input[name="type"]').forEach((radio) => {
-
         radio.addEventListener("change", (r) => {
-
           const button = document.querySelector("esp-web-install-button");
           button.manifest = `./${radio.value}.json`;
 
@@ -109,9 +107,9 @@
 
       });
 
-      document
-        .querySelector('input[name="type"]')
-        .dispatchEvent(new Event("click"));
+      console.log(document
+        .querySelector('input[name="type"]'))
+      // .dispatchEvent(new Event("click"));
     })
 
   </script>

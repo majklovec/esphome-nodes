@@ -34,7 +34,7 @@ wifi:
 captive_portal:
 
 dashboard_import:
-  package_import_url: github://majklovec/esphome-nodes/presence-esp32.yaml
+  package_import_url: github://majklovec/esphome-nodes/presence-esp32c3.yaml
 
 esp32_improv:
   authorizer: none
