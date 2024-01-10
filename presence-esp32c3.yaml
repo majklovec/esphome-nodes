@@ -10,7 +10,7 @@ esphome:
     board_build.f_flash: 40000000L
 
     board_build.flash_size: 4MB
-  name_add_mac_suffix: true
+  name_add_mac_suffix: false
   project:
     name: esphome.presence-sensor
     version: "1.0"
