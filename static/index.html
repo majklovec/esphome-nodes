@@ -106,10 +106,12 @@
           info.textContent = radio.getAttribute('description')
 
         });
-        document
-          .querySelector('input[name="type"]')
-          .dispatchEvent(new Event("click"));
+
       });
+
+      document
+        .querySelector('input[name="type"]')
+        .dispatchEvent(new Event("click"));
     })
 
   </script>
