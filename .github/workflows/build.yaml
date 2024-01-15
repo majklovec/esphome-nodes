@@ -45,3 +45,21 @@ jobs:
       manifest_filename: microgreens.json
       clean: false
       esphome_version: latest
+  publish-lightemp:
+    name: Publish Lightemp
+    uses: esphome/workflows/.github/workflows/publish.yml@main
+    with:
+      files: lightemp-esp32.yaml
+      name: Light and temp/hum sensor
+      manifest_filename: presence.json
+      clean: false
+      esphome_version: latest
+  publish-table:
+    name: Publish table
+    uses: esphome/workflows/.github/workflows/publish.yml@main
+    with:
+      files: table-logicdata-esp8266.yaml
+      name: Standing table
+      manifest_filename: presence.json
+      clean: false
+      esphome_version: latest

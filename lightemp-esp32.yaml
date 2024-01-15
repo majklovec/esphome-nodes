@@ -1,0 +1,100 @@
+substitutions:
+  name: lightemp
+
+esphome:
+  name: $name
+  friendly_name: $name
+  name_add_mac_suffix: true
+  project:
+    name: esphome.lightemp
+    version: "1.0"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+api:
+
+ota:
+
+improv_serial:
+
+wifi:
+  ap:
+    ssid: "ESP Table"
+
+captive_portal:
+
+dashboard_import:
+  package_import_url: github://majklovec/esphome-nodes/light-esp32.yaml@main
+  import_full_config: false
+
+esp32_improv:
+  authorizer: none
+
+web_server:
+  port: 80
+
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: True
+
+sensor:
+  - platform: bme680
+    temperature:
+      name: "BME680 Temperature"
+      oversampling: 16x
+    pressure:
+      name: "BME680 Pressure"
+    humidity:
+      id: "humidity"
+      name: "BME680 Humidity"
+    gas_resistance:
+      id: "gas_resistance"
+      name: "BME680 Gas Resistance"
+    address: 0x77
+    update_interval: 10s
+  - platform: template
+    name: "BME680 Indoor Air Quality"
+    id: iaq
+    icon: "mdi:gauge"
+    # caulculation: comp_gas = log(R_gas[ohm]) + 0.04 log(Ohm)/%rh * hum[%rh]
+    lambda: |-
+      return log(id(gas_resistance).state) + 0.04 *  id(humidity).state;
+
+  - platform: tsl2561
+    name: "TSL2561 Ambient Light"
+    address: 0x49
+    update_interval: 10s
+
+text_sensor:
+  - platform: template
+    name: "BME680 IAQ Classification"
+    icon: "mdi:checkbox-marked-circle-outline"
+    lambda: |-
+      if (int(id(iaq).state) <= 50) {
+        return {"Excellent"};
+      }
+      else if (int(id(iaq).state) <= 100) {
+        return {"Good"};
+      }
+      else if (int(id(iaq).state) <= 150) {
+        return {"Lightly polluted"};
+      }
+      else if (int(id(iaq).state) <= 200) {
+        return {"Moderately polluted"};
+      }
+      else if (int(id(iaq).state) <= 250) {
+        return {"Heavily polluted"};
+      }
+      else if (int(id(iaq).state) <= 350) {
+        return {"Severely polluted"};
+      }
+      else if (int(id(iaq).state) <= 500) {
+        return {"Extremely polluted"};
+      }
+      else {
+        return {"unknown"};
+      }
