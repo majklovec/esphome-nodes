@@ -63,3 +63,12 @@ jobs:
       manifest_filename: presence.json
       clean: false
       esphome_version: latest
+  publish-sonoff:
+    name: Publish sonoff
+    uses: esphome/workflows/.github/workflows/publish.yml@main
+    with:
+      files: sonoff-basic.yaml
+      name: Sonoff basic
+      manifest_filename: presence.json
+      clean: false
+      esphome_version: latest

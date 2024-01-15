@@ -1,0 +1,85 @@
+substitutions:
+  name: bathroom
+
+esphome:
+  name: $name
+  friendly_name: $name
+  name_add_mac_suffix: true
+  project:
+    name: esphome.sonoff-r1
+    version: "1.0"
+
+esp8266:
+  board: esp01_1m
+
+api:
+
+ota:
+
+improv_serial:
+
+wifi:
+  ap:
+    ssid: "ESP Sonoff"
+
+captive_portal:
+
+dashboard_import:
+  package_import_url: github://majklovec/esphome-nodes/sonoff-basic-r1.yaml@main
+  import_full_config: false
+
+web_server:
+  port: 80
+
+i2c:
+  sda: GPIO3
+  scl: GPIO1
+  scan: true
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO0
+      mode: INPUT_PULLUP
+      inverted: True
+    name: "Basic Button"
+
+switch:
+  - platform: gpio
+    name: "Basic Relay"
+    id: relay
+    pin: GPIO12
+
+status_led:
+  pin:
+    number: GPIO13
+    inverted: true
+
+sensor:
+  - platform: wifi_signal
+    name: "Basic WiFi Signal"
+    update_interval: 60s
+  - platform: uptime
+    name: "Basic Uptime"
+
+  - platform: bme280
+    temperature:
+      name: "Basic Temperature"
+      oversampling: 16x
+    pressure:
+      name: "Basic Pressure"
+    humidity:
+      name: "Basic Humidity"
+      on_value_range:
+        - above: 65.0
+          then:
+            - switch.turn_on: relay
+        - below: 50.0
+          then:
+            - switch.turn_off: relay
+    address: 0x76
+    update_interval: 60s
+
+text_sensor:
+  - platform: version
+    name: "Basic ESPHome Version"
