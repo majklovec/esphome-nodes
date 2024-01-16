@@ -156,12 +156,6 @@ switch:
     name: "move position1"
     id: "move_position1"
     output: bit3
-    # on_turn_on:
-    #   then:
-    #     - output.turn_on: bit4
-    # on_turn_off:
-    #   then:
-    #     - output.turn_off: bit4
 
   - platform: output
     name: "move_position2"
