@@ -51,7 +51,7 @@ jobs:
     with:
       files: lightemp-esp32.yaml
       name: Light, humidity, temperature sensor
-      manifest_filename: presence.json
+      manifest_filename: lightemp.json
       clean: false
       esphome_version: latest
   build-table:
@@ -60,7 +60,7 @@ jobs:
     with:
       files: table-logicdata-esp8266.yaml
       name: Standing table
-      manifest_filename: presence.json
+      manifest_filename: table.json
       clean: false
       esphome_version: latest
   build-sonoff:
@@ -69,35 +69,6 @@ jobs:
     with:
       files: sonoff-basic-r1.yaml
       name: Sonoff basic
-      manifest_filename: presence.json
+      manifest_filename: sonoff.json
       clean: false
       esphome_version: latest
-  # Deploy job
-  deploy:
-    # Add a dependency to the build job
-    if: ${{ always() }}
-    needs:
-      [
-        build-presence,
-        build-bedweight,
-        build-lightemp,
-        build-microgreens,
-        build-sonoff,
-        build-table,
-      ]
-    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
-    permissions:
-      pages: write # to deploy to Pages
-      id-token: write # to verify the deployment originates from an appropriate source
-
-    # Deploy to the github-pages environment
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    # Specify runner + deployment step
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4 # or specific "vX.X.X" version tag for this action
