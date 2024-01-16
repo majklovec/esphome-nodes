@@ -1,14 +1,14 @@
 {
-  "name": "Light, humidity, temperature sensor",
+  "name": "Sonoff basic",
   "version": "",
   "home_assistant_domain": "esphome",
   "new_install_skip_erase": false,
   "builds": [
     {
-      "chipFamily": "ESP32",
+      "chipFamily": "ESP8266",
       "parts": [
         {
-          "path": "lightemp-esp32/lightemp-esp32.bin",
+          "path": "bathroom-esp8266/bathroom-esp8266.bin",
           "offset": 0
         }
       ]
