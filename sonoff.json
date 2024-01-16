@@ -1,0 +1,17 @@
+{
+  "name": "Sonoff basic",
+  "version": "",
+  "home_assistant_domain": "esphome",
+  "new_install_skip_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP8266",
+      "parts": [
+        {
+          "path": "bathroom-esp8266/bathroom-esp8266.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}

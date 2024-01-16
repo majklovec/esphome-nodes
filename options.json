@@ -28,5 +28,20 @@
         "value": "wordclock",
         "label": "Wordclock",
         "info": "Wordclock sensor"
+    },
+    {
+        "value": "table",
+        "label": "table",
+        "info": "table sensor"
+    },
+    {
+        "value": "lightemp",
+        "label": "lightemp",
+        "info": "lightemp sensor"
+    },
+    {
+        "value": "sonoff",
+        "label": "sonoff",
+        "info": "sonoff sensor"
     }
 ]
