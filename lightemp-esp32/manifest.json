@@ -1,0 +1,9 @@
+{
+  "chipFamily": "ESP32",
+  "parts": [
+    {
+      "path": "lightemp-esp32/lightemp-esp32.bin",
+      "offset": 0
+    }
+  ]
+}
