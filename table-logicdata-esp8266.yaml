@@ -42,9 +42,6 @@ dashboard_import:
   package_import_url: github://majklovec/esphome-nodes/table-esp8266.yaml@main
   import_full_config: false
 
-esp32_improv:
-  authorizer: none
-
 web_server:
   port: 80
 
