@@ -28,6 +28,8 @@ api:
 
 ota:
 
+logger:
+
 improv_serial:
 
 wifi:
