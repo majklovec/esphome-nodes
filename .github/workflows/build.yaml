@@ -50,7 +50,7 @@ jobs:
     uses: esphome/workflows/.github/workflows/publish.yml@main
     with:
       files: lightemp-esp32.yaml
-      name: Light and temp/hum sensor
+      name: Light, humidity, temperature sensor
       manifest_filename: presence.json
       clean: false
       esphome_version: latest
