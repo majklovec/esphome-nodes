@@ -1,5 +1,5 @@
 {
-  "name": "Light, humidity, temperature sensor",
+  "name": "Bed sensor",
   "version": "",
   "home_assistant_domain": "esphome",
   "new_install_skip_erase": false,
@@ -8,7 +8,7 @@
       "chipFamily": "ESP32",
       "parts": [
         {
-          "path": "lightemp-esp32/lightemp-esp32.bin",
+          "path": "bedweight-esp32/bedweight-esp32.bin",
           "offset": 0
         }
       ]
