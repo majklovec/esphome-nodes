@@ -18,57 +18,62 @@ permissions:
   id-token: write
 
 jobs:
-  publish-presence:
-    name: Publish Presence
-    uses: esphome/workflows/.github/workflows/publish.yml@main
-    with:
-      files: presence-esp32c3.yaml
-      name: Presence sensor
-      manifest_filename: presence.json
-      clean: false
-      esphome_version: latest
-  publish-bedweight:
-    name: Publish Bedweight
-    uses: esphome/workflows/.github/workflows/publish.yml@main
-    with:
-      files: bedweight-esp32.yaml
-      name: Bed sensor
-      manifest_filename: presence.json
-      clean: false
-      esphome_version: latest
-  publish-microgreens:
-    name: Publish Microgreens
-    uses: esphome/workflows/.github/workflows/publish.yml@main
-    with:
-      files: microgreens-esp32.yaml,microgreens-esp8266.yaml
-      name: Microgreens
-      manifest_filename: microgreens.json
-      clean: false
-      esphome_version: latest
-  publish-lightemp:
-    name: Publish Lightemp
-    uses: esphome/workflows/.github/workflows/publish.yml@main
-    with:
-      files: lightemp-esp32.yaml
-      name: Light, humidity, temperature sensor
-      manifest_filename: presence.json
-      clean: false
-      esphome_version: latest
-  publish-table:
-    name: Publish table
-    uses: esphome/workflows/.github/workflows/publish.yml@main
-    with:
-      files: table-logicdata-esp8266.yaml
-      name: Standing table
-      manifest_filename: presence.json
-      clean: false
-      esphome_version: latest
-  publish-sonoff:
-    name: Publish sonoff
-    uses: esphome/workflows/.github/workflows/publish.yml@main
-    with:
-      files: sonoff-basic-r1.yaml
-      name: Sonoff basic
-      manifest_filename: presence.json
-      clean: false
-      esphome_version: latest
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish Presence
+        uses: esphome/workflows/.github/workflows/publish.yml@main
+        with:
+          files: presence-esp32c3.yaml
+          name: Presence sensor
+          manifest_filename: presence.json
+          clean: false
+          esphome_version: latest
+
+      - name: Publish Bedweight
+        uses: esphome/workflows/.github/workflows/publish.yml@main
+        with:
+          files: bedweight-esp32.yaml
+          name: Bed sensor
+          manifest_filename: presence.json
+          clean: false
+          esphome_version: latest
+
+      - name: Publish Microgreens
+        uses: esphome/workflows/.github/workflows/publish.yml@main
+        with:
+          files: microgreens-esp32.yaml,microgreens-esp8266.yaml
+          name: Microgreens
+          manifest_filename: microgreens.json
+          clean: false
+          esphome_version: latest
+
+      - name: Publish Lightemp
+        uses: esphome/workflows/.github/workflows/publish.yml@main
+        with:
+          files: lightemp-esp32.yaml
+          name: Light, humidity, temperature sensor
+          manifest_filename: presence.json
+          clean: false
+          esphome_version: latest
+
+      - name: Publish table
+        uses: esphome/workflows/.github/workflows/publish.yml@main
+        with:
+          files: table-logicdata-esp8266.yaml
+          name: Standing table
+          manifest_filename: presence.json
+          clean: false
+          esphome_version: latest
+
+      - name: Publish sonoff
+        uses: esphome/workflows/.github/workflows/publish.yml@main
+        with:
+          files: sonoff-basic-r1.yaml
+          name: Sonoff basic
+          manifest_filename: presence.json
+          clean: false
+          esphome_version: latest
+  publish-pages:
+    name: Deploy to GitHub Pages
+    uses: actions/deploy-pages@v4
