@@ -72,3 +72,12 @@ jobs:
       manifest_filename: sonoff.json
       clean: false
       esphome_version: latest
+  build-grip:
+    name: Publish Grip
+    uses: esphome/workflows/.github/workflows/publish.yml@main
+    with:
+      files: grip-esp32.yaml
+      name: Grip tester
+      manifest_filename: grip.json
+      clean: false
+      esphome_version: latest

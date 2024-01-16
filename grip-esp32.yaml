@@ -1,0 +1,256 @@
+substitutions:
+  name: grip
+
+esphome:
+  name: $name
+  friendly_name: $name
+  name_add_mac_suffix: true
+  project:
+    name: esphome.grip
+    version: "1.0"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+api:
+
+ota:
+
+logger:
+
+improv_serial:
+
+wifi:
+  ap:
+    ssid: "ESP Grip"
+
+captive_portal:
+
+dashboard_import:
+  package_import_url: github://majklovec/esphome-nodes/grip-esp32.yaml@main
+
+esp32_improv:
+  authorizer: none
+
+web_server:
+  port: 80
+
+globals:
+  - id: initial_zero
+    type: float
+    restore_value: yes
+    # NOTE: make sure to align this value to the one used in "calibrate_linear" below!
+    initial_value: "191160"
+
+  - id: auto_tare_enabled
+    type: bool
+    restore_value: yes
+    initial_value: "true"
+
+  - id: auto_tare_difference
+    type: float
+    restore_value: yes
+    initial_value: "0"
+
+  - id: max_grip_value
+    type: float
+    initial_value: "0"
+    restore_value: true
+
+  # Timer to track how long the maximum value has been maintained
+  - id: max_value_timer
+    type: float
+    initial_value: "0"
+
+http_request:
+  useragent: esphome/device
+  timeout: 10s
+
+button:
+  ## Button used to initiate a manual tare
+  - platform: template
+    id: grip_manual_tare_action_switch
+    name: "Grip Manual Tare Action"
+    icon: mdi:scale-balance
+    on_press:
+      - lambda: |-
+          id(auto_tare_difference) = id(initial_zero) - id(grip_hx711_value_raw).state;
+output:
+  - platform: ledc
+    pin: GPIO02
+    id: gpio_02
+
+# Example usage in a light
+light:
+  - platform: monochromatic
+    output: gpio_02
+    name: "LED"
+    id: led
+    effects:
+      - pulse:
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 0.5s
+          update_interval: 0.5s
+          min_brightness: 0%
+          max_brightness: 100%
+      - pulse:
+          name: "Slow Pulse"
+          update_interval: 2s
+
+switch:
+  ## Switch to enable/disable the auto tare feature
+  - platform: template
+    id: grip_continuous_tare_enabled
+    name: "Grip Continuous Tare Enabled"
+    lambda: |-
+      return id(auto_tare_enabled);
+    turn_on_action:
+      - lambda: |-
+          id(auto_tare_enabled) = true;
+    turn_off_action:
+      - lambda: |-
+          id(auto_tare_enabled) = false;
+time:
+  - platform: sntp
+    timezone: Europe/Prague
+    id: sntp_time
+
+## Sensor Configuration ##
+sensor:
+  # template sensors from global variables
+  - platform: template
+    id: grip_initial_zero
+    name: "Grip Initial Zero"
+    lambda: |-
+      return id(initial_zero);
+    update_interval: 1s
+
+  - platform: template
+    id: grip_auto_tare_difference
+    name: "Grip Auto Tare Difference"
+    lambda: |-
+      return id(auto_tare_difference);
+    update_interval: 1s
+
+  # RAW Scale input
+  - platform: hx711
+    id: grip_hx711_value_raw
+    name: "raw"
+    # internal: True
+    dout_pin: GPIO16
+    clk_pin: GPIO04
+    gain: 128
+    update_interval: 0.2s
+    filters:
+      - quantile:
+          window_size: 10
+          send_every: 1
+          send_first_at: 1
+          quantile: .9
+    on_value:
+      then:
+        - sensor.template.publish:
+            id: grip_hx711_value
+            state: !lambda "return id(grip_hx711_value_raw).state;"
+        - if:
+            condition:
+              and:
+                - lambda: "return id(auto_tare_enabled);"
+                # current Grip value is below approx. 10KG
+                - lambda: "return id(grip_hx711_value).state < 10.0;"
+            then:
+              - lambda: "id(max_grip_value) = 0;"
+              - if:
+                  condition:
+                    # current raw scale value is below expected zero value
+                    - lambda: "return id(grip_hx711_value_raw).state < (id(initial_zero) - id(auto_tare_difference));"
+                  then:
+                    # INcrease Auto-Tare offset to slowly align real zero value with expected zero value
+                    - lambda: |-
+                        id(auto_tare_difference) += 10;
+                  else:
+                    # DEcrease Auto-Tare offset to slowly align real zero value with expected zero value
+                    - lambda: |-
+                        id(auto_tare_difference) -= 10;
+
+  # Mapped value to KG
+  - platform: template
+    id: grip_hx711_value
+    name: "Grip HX711 Value"
+    internal: False
+    filters:
+      # apply auto_tare difference
+      - lambda: "return x + id(auto_tare_difference);"
+      # apply rough calibration
+      - calibrate_linear:
+          # retrieve these values by evaluating the raw values with loads of known mass.
+          # note that a bigger difference between measurements usually results in higher resolution,
+          # so measure 0 Kg and the highest known mass you have (like f.ex. your own weight, measured by a normal scale with good accuracy)
+          - 191160 -> 0
+          - 225510 -> 0.994
+          - 240000 -> 1.638
+      # map values below 0.1 to 0 (to decrease value changes due to random fluctuation)
+      - lambda: |-
+          if (x <= 0.1) {
+            return 0.0;
+          } else {
+            return x;
+          }
+
+    unit_of_measurement: kg
+    accuracy_decimals: 2
+    # the sensor will automatically update through the 'sensor.template.publish' call
+    update_interval: never
+
+  - platform: template
+    id: max_value_handler
+    name: "Max value"
+    lambda: |-
+      return id(max_grip_value);
+    update_interval: 1s
+    unit_of_measurement: kg
+    accuracy_decimals: 2
+
+  # Template sensor to handle resetting the timer and sending the value
+  - platform: template
+    id: timer_value_handler
+    name: "Timer value"
+    update_interval: 1s
+    lambda: |-
+      if (id(grip_hx711_value).state > 10 && id(grip_hx711_value).state > id(max_grip_value)) {
+        id(max_grip_value) = id(grip_hx711_value).state;
+        id(max_value_timer) = 0;
+        id(max_value_handler).publish_state(id(max_grip_value));
+
+        auto call = id(led).turn_on();
+        call.set_effect("Fast Pulse");
+        call.perform();    
+
+      } else {
+        id(max_value_timer)++;
+      }
+      if (id(max_grip_value) < 10) {
+        id(max_value_timer) = 0;
+      }
+      return id(max_value_timer);
+    # internal: True
+    on_value_range:
+      - above: 10
+        then:
+          - lambda: "id(max_value_timer) = 0;"
+          - if:
+              condition:
+                - lambda: "return id(max_grip_value) > 10;"
+              then:
+                - lambda: |-
+                    auto call = id(led).turn_on();
+                    call.set_effect("None");
+                    call.perform();
+                - lambda: "id(max_grip_value) = 0;"
+                - delay: 3s
+                - lambda: |-
+                    auto call = id(led).turn_off();
+                    call.perform();
