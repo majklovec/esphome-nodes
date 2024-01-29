@@ -28,12 +28,12 @@ improv_serial:
 
 wifi:
   ap:
-    ssid: "ESP Microgreens"
+    ssid: "ESP wordclock"
 
 captive_portal:
 
 dashboard_import:
-  package_import_url: github://majklovec/esphome-nodes/microgreens.yaml
+  package_import_url: github://majklovec/esphome-nodes/wordclock-esp32.yaml
 
 esp32_improv:
   authorizer: none
