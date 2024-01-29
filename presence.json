@@ -1,14 +1,14 @@
 {
-  "name": "Bed sensor",
+  "name": "Presence sensor",
   "version": "",
   "home_assistant_domain": "esphome",
   "new_install_skip_erase": false,
   "builds": [
     {
-      "chipFamily": "ESP32",
+      "chipFamily": "ESP32-C3",
       "parts": [
         {
-          "path": "bedweight-esp32/bedweight-esp32.bin",
+          "path": "presence-esp32/presence-esp32.bin",
           "offset": 0
         }
       ]
