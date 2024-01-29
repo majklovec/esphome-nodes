@@ -86,7 +86,7 @@ jobs:
     uses: esphome/workflows/.github/workflows/publish.yml@main
     with:
       files: wordclock-esp32.yaml
-      name: wordclock tester
+      name: Word Clock
       manifest_filename: wordclock.json
       clean: false
       esphome_version: latest
