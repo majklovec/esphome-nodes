@@ -1,0 +1,9 @@
+{
+  "chipFamily": "ESP32",
+  "parts": [
+    {
+      "path": "wordclock-esp32/wordclock-esp32.bin",
+      "offset": 0
+    }
+  ]
+}
