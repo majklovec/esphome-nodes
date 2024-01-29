@@ -81,3 +81,12 @@ jobs:
       manifest_filename: grip.json
       clean: false
       esphome_version: latest
+  build-wordlock:
+    name: Publish wordlock
+    uses: esphome/workflows/.github/workflows/publish.yml@main
+    with:
+      files: wordlock-esp32.yaml
+      name: wordlock tester
+      manifest_filename: wordlock.json
+      clean: false
+      esphome_version: latest

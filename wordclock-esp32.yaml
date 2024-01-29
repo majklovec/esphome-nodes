@@ -1,0 +1,123 @@
+substitutions:
+  name: "wordclock"
+
+esphome:
+  name: $name
+  friendly_name: $name
+  name_add_mac_suffix: true
+  project:
+    name: esphome.wordclock
+    version: "1.0"
+  includes:
+    - cs.h
+  on_boot:
+    priority: 600
+    then:
+      - display.page.show: start
+esp32:
+  board: esp32doit-devkit-v1
+  framework:
+    type: esp-idf
+
+api:
+  reboot_timeout: 0s
+
+ota:
+
+improv_serial:
+
+wifi:
+  ap:
+    ssid: "ESP Microgreens"
+
+captive_portal:
+
+dashboard_import:
+  package_import_url: github://majklovec/esphome-nodes/microgreens.yaml
+
+esp32_improv:
+  authorizer: none
+
+web_server:
+  port: 80
+
+logger:
+  level: DEBUG
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Prague
+    on_time_sync:
+      then:
+        - logger.log: "Synchronized system clock"
+        - delay: 5s
+        - display.page.show: wordclock
+
+number:
+  - platform: template
+    name: "Color Red"
+    id: red
+    optimistic: True
+    min_value: 0
+    max_value: 255
+    step: 1
+    initial_value: 255
+    restore_value: true
+  - platform: template
+    name: "Color Green"
+    id: green
+    optimistic: True
+    min_value: 0
+    max_value: 255
+    step: 1
+    initial_value: 0
+    restore_value: true
+  - platform: template
+    name: "Color Blue"
+    id: blue
+    optimistic: True
+    min_value: 0
+    max_value: 255
+    step: 1
+    initial_value: 0
+    restore_value: true
+
+light:
+  - platform: esp32_rmt_led_strip
+    rgb_order: GRB
+    pin: GPIO12
+    num_leds: 256
+    rmt_channel: 0
+    chipset: ws2812
+    name: "Clock"
+    color_correct: [50%, 50%, 50%]
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0s
+    id: led_matrix_light
+
+display:
+  - platform: addressable_light
+    id: led_matrix_display
+    addressable_light_id: led_matrix_light
+    width: 16
+    height: 16
+    rotation: 180°
+    update_interval: 100ms
+    pixel_mapper: "return (x % 2 == 0) ? ((x % 16) * 16) + (y % 16) : ((x % 16) * 16) + (16 - 1 - (y % 16));"
+    pages:
+      - id: start
+        lambda: |-
+          it.draw_pixel_at(0, 0, Color(0x0000ff));
+
+      - id: connecting
+        lambda: |-
+          it.draw_pixel_at(15, 0, Color(0x00ffff));
+      - id: wordclock
+        lambda: |-
+          int mins = id(sntp_time).now().hour * 60 + id(sntp_time).now().minute;
+          Color color(id(red).state, id(green).state, id(blue).state);
+          for (int y = 0; y < it.get_height(); y++) {
+              int number = leds[mins * it.get_height() + y];
+              for (int x = 0; x < it.get_width(); x++) it.draw_pixel_at(it.get_width() - 1 - x, y, ((number >> x) & 0x01) ? color : Color(0x000000));          
+          }
