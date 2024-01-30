@@ -33,7 +33,7 @@ wifi:
 captive_portal:
 
 dashboard_import:
-  package_import_url: github://majklovec/esphome-nodes/wordclock-esp32.yaml
+  package_import_url: github://majklovec/esphome-nodes/wordclock-esp32.yaml@main
 
 esp32_improv:
   authorizer: none

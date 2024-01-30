@@ -27,7 +27,7 @@ wifi:
 captive_portal:
 
 dashboard_import:
-  package_import_url: github://majklovec/esphome-nodes/microgreens-esp8266.yaml
+  package_import_url: github://majklovec/esphome-nodes/microgreens-esp8266.yaml@main
 
 web_server:
   port: 80
