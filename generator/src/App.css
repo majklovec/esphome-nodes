@@ -1,0 +1,16 @@
+body {
+  font-family: "Saira Stencil One", cursive;
+}
+
+td {
+  font-size: 200%;
+  text-align: center;
+}
+
+sup {
+  font-size: 70%;
+}
+
+.nums td {
+  font-size: 160%;
+}
